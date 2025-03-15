@@ -25,23 +25,24 @@ namespace CustomerManagementApp
                 customers = dbHelper.GetCustomers();
                 customerGridView.DataSource = customers;
 
-                customerGridView.Columns["FirstName"].ReadOnly = false;  // Allow editing of First Name
-                customerGridView.Columns["LastName"].ReadOnly = false;   // Allow editing of Last Name
-                customerGridView.Columns["Age"].ReadOnly = false;        // Allow editing of Age
+                // Allow editing of First Name, Last Name and Age
+                customerGridView.Columns["FirstName"].ReadOnly = false;  
+                customerGridView.Columns["LastName"].ReadOnly = false;
+                customerGridView.Columns["Age"].ReadOnly = false;
                 customerGridView.Columns["Location"].ReadOnly = false;
 
 
                 // Check if password is blank, and call SetPassword for each customer with blank password
                 foreach (var customer in customers)
                 {
-                    if (string.IsNullOrEmpty(customer.PasswordHash)) // Check if the password is blank
+                    // Check if the password is blank
+                    if (string.IsNullOrEmpty(customer.PasswordHash)) 
                     {
-                        
-                        SetPassword(customer);  // Or prompt the user to set the password here
+                        // Set the password and salt
+                        SetPassword(customer);
                         LoggerHelper.Info($"Password set for customer: {customer.FirstName} {customer.LastName}");
                     }
                 }
-
 
                 LoggerHelper.Info("Customers loaded successfully.");
             }
