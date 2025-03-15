@@ -11,18 +11,18 @@ namespace CustomerManagementApp.Utils
         {
             try
             {
+                // Ensure the directory exists
                 var directory = Path.GetDirectoryName(filePath);
-
                 if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
                 {
                     Directory.CreateDirectory(directory);
                     LoggerHelper.Info($"Created directory: {directory}");
                 }
 
-                string fullPath = Path.Combine(filePath, "customer.json");
-                File.WriteAllText(fullPath, JsonConvert.SerializeObject(customers, Formatting.Indented));
+                // Write the JSON to the full file path provided (no need to append a filename)
+                File.WriteAllText(filePath, JsonConvert.SerializeObject(customers, Formatting.Indented));
 
-                LoggerHelper.Info($"Successfully exported JSON to: {fullPath}");
+                LoggerHelper.Info($"Successfully exported JSON to: {filePath}");
             }
             catch (Exception ex)
             {

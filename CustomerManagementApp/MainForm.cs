@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Entity;
+using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using CustomerManagementApp.Utils;
@@ -9,8 +12,9 @@ namespace CustomerManagementApp
 {
     public partial class MainForm : Form
     {
-        private DatabaseHelper dbHelper = new DatabaseHelper();
         private List<Customer> customers;
+        private List<Customer> modifiedCustomers = new List<Customer>();
+
 
         public MainForm()
         {
@@ -22,28 +26,24 @@ namespace CustomerManagementApp
         {
             try
             {
-                customers = dbHelper.GetCustomers();
-                customerGridView.DataSource = customers;
+                using (var context = new CustomerContext())
+                {
+                    customers = context.Customers.ToList();
+                    customerGridView.DataSource = customers;
+                }
 
-                // Allow editing of First Name, Last Name and Age
-                customerGridView.Columns["FirstName"].ReadOnly = false;  
+                customerGridView.Columns["FirstName"].ReadOnly = false;
                 customerGridView.Columns["LastName"].ReadOnly = false;
                 customerGridView.Columns["Age"].ReadOnly = false;
                 customerGridView.Columns["Location"].ReadOnly = false;
 
-
-                // Check if password is blank, and call SetPassword for each customer with blank password
                 foreach (var customer in customers)
                 {
-                    // Check if the password is blank
-                    if (string.IsNullOrEmpty(customer.PasswordHash)) 
+                    if (string.IsNullOrEmpty(customer.PasswordHash))
                     {
-                        // Set the password and salt
                         SetPassword(customer);
-                        LoggerHelper.Info($"Password set for customer: {customer.FirstName} {customer.LastName}");
                     }
                 }
-
                 LoggerHelper.Info("Customers loaded successfully.");
             }
             catch (Exception ex)
@@ -53,21 +53,35 @@ namespace CustomerManagementApp
             }
         }
 
+        private void customerGridView_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+        {
+            // Ensure it's a valid row
+            if (e.RowIndex >= 0) 
+            {
+                var customer = customerGridView.Rows[e.RowIndex].DataBoundItem as Customer;
+                if (customer != null && !modifiedCustomers.Contains(customer))
+                {
+                    modifiedCustomers.Add(customer);
+
+                    customerGridView.Rows[e.RowIndex].Cells[e.ColumnIndex].Style.ForeColor = Color.Red;
+                }
+            }
+        }
+
+
         public void SetPassword(Customer customer)
         {
-            // Generate a random salt of length 16
             string salt = PasswordHelper.GenerateSalt();
-
-            // Compute the SHA1 hash of "password" concatenated with the salt
             string passwordHash = PasswordHelper.GeneratePasswordHash(salt);
 
-            // Update the customer's PasswordHash and Salt
             customer.PasswordHash = passwordHash;
             customer.Salt = salt;
 
-            // Save the updated customer to the database
-            dbHelper.UpdateCustomers(new List<Customer> { customer });
-
+            using (var context = new CustomerContext())
+            {
+                context.Entry(customer).State = EntityState.Modified;
+                context.SaveChanges();
+            }
             LoggerHelper.Info($"Password set and updated for customer: {customer.FirstName} {customer.LastName}");
         }
 
@@ -75,15 +89,71 @@ namespace CustomerManagementApp
         {
             foreach (var customer in customers)
             {
-                customer.LastName = customer.LastName.ToUpper();
+                // Find the customer row in the DataGridView by matching the customer object
+                var rowIndex = customerGridView.Rows.Cast<DataGridViewRow>()
+                    .FirstOrDefault(r => r.DataBoundItem == customer)?.Index;
+
+                if (rowIndex.HasValue)
+                {
+                    // Check if the LastName has been changed and if it's not already in the modifiedCustomers list
+                    if (customer.LastName != customer.LastName.ToUpper())
+                    {
+                        // Update LastName to uppercase
+                        customer.LastName = customer.LastName.ToUpper();
+
+                        // Add the modified customer to the modifiedCustomers list
+                        if (!modifiedCustomers.Contains(customer))
+                        {
+                            modifiedCustomers.Add(customer);
+                        }
+
+                        // Change the text color to red for the updated LastName column cell
+                        customerGridView.Rows[rowIndex.Value].Cells["LastName"].Style.ForeColor = Color.Red;
+                    }
+                }
             }
+
+            // Refresh the grid to reflect changes
             customerGridView.Refresh();
         }
 
+
         private void btnCommitChanges_Click(object sender, EventArgs e)
         {
-            dbHelper.UpdateCustomers(customers);
-            LoadCustomers();
+            if (modifiedCustomers.Count == 0)
+            {
+                MessageBox.Show("No changes detected.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            using (var context = new CustomerContext())
+            {
+                foreach (var customer in modifiedCustomers)
+                {
+                    var existingCustomer = context.Customers.Find(customer.Id);
+                    if (existingCustomer != null)
+                    {
+                        // Update fields if changed
+                        existingCustomer.FirstName = customer.FirstName;
+                        existingCustomer.LastName = customer.LastName;
+                        existingCustomer.Age = customer.Age;
+                        existingCustomer.Location = customer.Location;
+
+                        // Update LastUpdateDate
+                        existingCustomer.LastUpdateDate = DateTime.Now;
+                    }
+                }
+                context.SaveChanges();
+            }
+
+            // Reset the list after committing changes
+            modifiedCustomers.Clear();
+
+            // Reset the font color to black for all cells in the DataGridView
+            customerGridView.DefaultCellStyle.ForeColor = Color.Black;
+
+            // Refresh data
+            LoadCustomers(); 
             MessageBox.Show("Changes committed to the database.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
@@ -91,28 +161,44 @@ namespace CustomerManagementApp
         {
             try
             {
-                // Prompt for first name to filter customers
                 string firstName = PromptForInput("Enter the first name to search for:");
-
-                // Filter customers by first name (case-insensitive)
                 var filteredCustomers = customers.Where(c => c.FirstName != null && c.FirstName.ToLower().Contains(firstName.ToLower())).ToList();
 
                 if (filteredCustomers.Any())
                 {
-                    // Prompt for the file path to save the JSON export
-                    string filePath = PromptForInput("Enter the directory path for JSON export:");
+                    string filePath;
+                    bool isValidPath = false;
 
-                    if (!string.IsNullOrWhiteSpace(filePath))
+                    // Loop until a valid file path is entered
+                    while (!isValidPath)
                     {
-                        // Use FileHelper to export the filtered customers to the provided file path
-                        FileHelper.ExportToJson(filteredCustomers, filePath);
+                        filePath = PromptForInput("Enter the full file path for JSON export (including filename, e.g., C:\\CATALIS\\customer.json):");
 
-                        MessageBox.Show($"Data exported successfully to {filePath}", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        LoggerHelper.Info($"Data exported successfully to {filePath}");
-                    }
-                    else
-                    {
-                        MessageBox.Show("Invalid file path. Please provide a valid path.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        if (!string.IsNullOrWhiteSpace(filePath))
+                        {
+                            // Check if the file path includes a valid filename
+                            string fileName = Path.GetFileName(filePath);
+
+                            // Get the file extension
+                            string fileExtension = Path.GetExtension(filePath).ToLower();
+
+                            if (string.IsNullOrEmpty(fileName) || !fileExtension.Equals(".json") && !fileExtension.Equals(".txt"))
+                            {
+                                MessageBox.Show("The file path must include a filename with an extension. Please provide a valid path.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            }
+                            else
+                            {
+                                // Valid path with filename, exit loop
+                                isValidPath = true; 
+                                FileHelper.ExportToJson(filteredCustomers, filePath);
+                                MessageBox.Show($"Data exported successfully to {filePath}", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                LoggerHelper.Info($"Data exported successfully to {filePath}");
+                            }
+                        }
+                        else
+                        {
+                            MessageBox.Show("Invalid file path. Please provide a valid path.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        }
                     }
                 }
                 else
@@ -133,8 +219,11 @@ namespace CustomerManagementApp
             string input = PromptForInput("Enter maximum age:");
             if (int.TryParse(input, out int maxAge))
             {
-                var filteredCustomers = customers.Where(c => c.Age <= maxAge).ToList();
-                customerGridView.DataSource = filteredCustomers;
+                using (var context = new CustomerContext())
+                {
+                    var filteredCustomers = context.Customers.Where(c => c.Age <= maxAge).ToList();
+                    customerGridView.DataSource = filteredCustomers;
+                }
             }
             else
             {
@@ -146,7 +235,7 @@ namespace CustomerManagementApp
         {
             return Interaction.InputBox(message, "Input Required", "");
         }
-       
+
         private void btnRefreshGrid_Click(object sender, EventArgs e)
         {
             LoadCustomers();

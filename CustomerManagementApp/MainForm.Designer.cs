@@ -55,6 +55,7 @@ namespace CustomerManagementApp
             this.customerGridView.RowHeadersWidth = 51;
             this.customerGridView.Size = new System.Drawing.Size(844, 250);
             this.customerGridView.TabIndex = 0;
+            this.customerGridView.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.customerGridView_CellValueChanged);
             // 
             // btnUppercaseLastNames
             // 
