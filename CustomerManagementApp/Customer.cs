@@ -14,7 +14,7 @@ namespace CustomerManagementApp
         public int Age { get; set; }
         public string Location { get; set; }
         public DateTime LastPurchaseDate { get; set; }
-        public DateTime LastUpdateDate { get; set; }
+        public DateTime? LastUpdateDate { get; set; }
         public string PasswordHash { get; set; }
         public string Salt { get; set; }
     }

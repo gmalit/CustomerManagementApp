@@ -42,51 +42,76 @@ namespace CustomerManagementApp
             this.btnCommitChanges = new System.Windows.Forms.Button();
             this.btnExportJson = new System.Windows.Forms.Button();
             this.btnSearchByAge = new System.Windows.Forms.Button();
-
+            this.btnRefreshGrid = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.customerGridView)).BeginInit();
             this.SuspendLayout();
-
-            // DataGridView
+            // 
+            // customerGridView
+            // 
+            this.customerGridView.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.AllCells;
             this.customerGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.customerGridView.Location = new System.Drawing.Point(12, 12);
+            this.customerGridView.Location = new System.Drawing.Point(12, 52);
             this.customerGridView.Name = "customerGridView";
-            this.customerGridView.Size = new System.Drawing.Size(600, 250);
+            this.customerGridView.RowHeadersWidth = 51;
+            this.customerGridView.Size = new System.Drawing.Size(844, 250);
             this.customerGridView.TabIndex = 0;
-
-            // Uppercase Last Names Button
-            this.btnUppercaseLastNames.Location = new System.Drawing.Point(12, 270);
+            // 
+            // btnUppercaseLastNames
+            // 
+            this.btnUppercaseLastNames.Location = new System.Drawing.Point(12, 310);
             this.btnUppercaseLastNames.Name = "btnUppercaseLastNames";
             this.btnUppercaseLastNames.Size = new System.Drawing.Size(140, 30);
+            this.btnUppercaseLastNames.TabIndex = 1;
             this.btnUppercaseLastNames.Text = "Uppercase Last Names";
             this.btnUppercaseLastNames.UseVisualStyleBackColor = true;
             this.btnUppercaseLastNames.Click += new System.EventHandler(this.btnUppercaseLastNames_Click);
-
-            // Commit Changes Button
-            this.btnCommitChanges.Location = new System.Drawing.Point(160, 270);
+            // 
+            // btnCommitChanges
+            // 
+            this.btnCommitChanges.Location = new System.Drawing.Point(253, 310);
             this.btnCommitChanges.Name = "btnCommitChanges";
             this.btnCommitChanges.Size = new System.Drawing.Size(140, 30);
+            this.btnCommitChanges.TabIndex = 2;
             this.btnCommitChanges.Text = "Commit Changes";
             this.btnCommitChanges.UseVisualStyleBackColor = true;
             this.btnCommitChanges.Click += new System.EventHandler(this.btnCommitChanges_Click);
-
-            // Export JSON Button
-            this.btnExportJson.Location = new System.Drawing.Point(310, 270);
+            // 
+            // btnExportJson
+            // 
+            this.btnExportJson.Location = new System.Drawing.Point(498, 310);
             this.btnExportJson.Name = "btnExportJson";
             this.btnExportJson.Size = new System.Drawing.Size(140, 30);
+            this.btnExportJson.TabIndex = 3;
             this.btnExportJson.Text = "Export JSON";
             this.btnExportJson.UseVisualStyleBackColor = true;
             this.btnExportJson.Click += new System.EventHandler(this.btnExportJson_Click);
-
-            // Search by Age Button
-            this.btnSearchByAge.Location = new System.Drawing.Point(460, 270);
+            // 
+            // btnSearchByAge
+            // 
+            this.btnSearchByAge.Location = new System.Drawing.Point(716, 310);
             this.btnSearchByAge.Name = "btnSearchByAge";
             this.btnSearchByAge.Size = new System.Drawing.Size(140, 30);
+            this.btnSearchByAge.TabIndex = 4;
             this.btnSearchByAge.Text = "Search by Age";
             this.btnSearchByAge.UseVisualStyleBackColor = true;
             this.btnSearchByAge.Click += new System.EventHandler(this.btnSearchByAge_Click);
-
-            // Form Settings
-            this.ClientSize = new System.Drawing.Size(624, 321);
+            // 
+            // btnRefreshGrid
+            // 
+            this.btnRefreshGrid.Location = new System.Drawing.Point(716, 12);
+            this.btnRefreshGrid.Name = "btnRefreshGrid";
+            this.btnRefreshGrid.Size = new System.Drawing.Size(140, 30);
+            this.btnRefreshGrid.TabIndex = 5;
+            this.btnRefreshGrid.Text = "Refresh Grid";
+            this.btnRefreshGrid.UseVisualStyleBackColor = true;
+            this.btnRefreshGrid.Click += new System.EventHandler(this.btnRefreshGrid_Click);
+            // 
+            // MainForm
+            // 
+            this.AutoSize = true;
+            this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.ClientSize = new System.Drawing.Size(868, 400);
+            this.Controls.Add(this.btnRefreshGrid);
             this.Controls.Add(this.customerGridView);
             this.Controls.Add(this.btnUppercaseLastNames);
             this.Controls.Add(this.btnCommitChanges);
@@ -96,11 +121,14 @@ namespace CustomerManagementApp
             this.Text = "Customer Management App";
             ((System.ComponentModel.ISupportInitialize)(this.customerGridView)).EndInit();
             this.ResumeLayout(false);
+
         }
 
-       
+
 
         #endregion
+
+        private System.Windows.Forms.Button btnRefreshGrid;
     }
 }
 

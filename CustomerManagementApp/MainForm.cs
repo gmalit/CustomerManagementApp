@@ -24,6 +24,25 @@ namespace CustomerManagementApp
             {
                 customers = dbHelper.GetCustomers();
                 customerGridView.DataSource = customers;
+
+                customerGridView.Columns["FirstName"].ReadOnly = false;  // Allow editing of First Name
+                customerGridView.Columns["LastName"].ReadOnly = false;   // Allow editing of Last Name
+                customerGridView.Columns["Age"].ReadOnly = false;        // Allow editing of Age
+                customerGridView.Columns["Location"].ReadOnly = false;
+
+
+                // Check if password is blank, and call SetPassword for each customer with blank password
+                foreach (var customer in customers)
+                {
+                    if (string.IsNullOrEmpty(customer.PasswordHash)) // Check if the password is blank
+                    {
+                        
+                        SetPassword(customer);  // Or prompt the user to set the password here
+                        LoggerHelper.Info($"Password set for customer: {customer.FirstName} {customer.LastName}");
+                    }
+                }
+
+
                 LoggerHelper.Info("Customers loaded successfully.");
             }
             catch (Exception ex)
@@ -31,6 +50,24 @@ namespace CustomerManagementApp
                 LoggerHelper.Error("Error loading customers from the database.", ex);
                 MessageBox.Show("Failed to load customers.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        public void SetPassword(Customer customer)
+        {
+            // Generate a random salt of length 16
+            string salt = PasswordHelper.GenerateSalt();
+
+            // Compute the SHA1 hash of "password" concatenated with the salt
+            string passwordHash = PasswordHelper.GeneratePasswordHash(salt);
+
+            // Update the customer's PasswordHash and Salt
+            customer.PasswordHash = passwordHash;
+            customer.Salt = salt;
+
+            // Save the updated customer to the database
+            dbHelper.UpdateCustomers(new List<Customer> { customer });
+
+            LoggerHelper.Info($"Password set and updated for customer: {customer.FirstName} {customer.LastName}");
         }
 
         private void btnUppercaseLastNames_Click(object sender, EventArgs e)
@@ -53,12 +90,33 @@ namespace CustomerManagementApp
         {
             try
             {
-                string filePath = PromptForInput("Enter file path for JSON export:");
-                if (!string.IsNullOrWhiteSpace(filePath))
+                // Prompt for first name to filter customers
+                string firstName = PromptForInput("Enter the first name to search for:");
+
+                // Filter customers by first name (case-insensitive)
+                var filteredCustomers = customers.Where(c => c.FirstName != null && c.FirstName.ToLower().Contains(firstName.ToLower())).ToList();
+
+                if (filteredCustomers.Any())
                 {
-                    FileHelper.ExportToJson(customers, filePath);
-                    MessageBox.Show($"Data exported successfully to {filePath}", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    LoggerHelper.Info($"Data exported successfully to {filePath}");
+                    // Prompt for the file path to save the JSON export
+                    string filePath = PromptForInput("Enter the directory path for JSON export:");
+
+                    if (!string.IsNullOrWhiteSpace(filePath))
+                    {
+                        // Use FileHelper to export the filtered customers to the provided file path
+                        FileHelper.ExportToJson(filteredCustomers, filePath);
+
+                        MessageBox.Show($"Data exported successfully to {filePath}", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        LoggerHelper.Info($"Data exported successfully to {filePath}");
+                    }
+                    else
+                    {
+                        MessageBox.Show("Invalid file path. Please provide a valid path.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("No customers found matching the first name.", "No Matches", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
             catch (Exception ex)
@@ -67,6 +125,7 @@ namespace CustomerManagementApp
                 MessageBox.Show("Failed to export data.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
 
         private void btnSearchByAge_Click(object sender, EventArgs e)
         {
@@ -85,6 +144,11 @@ namespace CustomerManagementApp
         private string PromptForInput(string message)
         {
             return Interaction.InputBox(message, "Input Required", "");
+        }
+       
+        private void btnRefreshGrid_Click(object sender, EventArgs e)
+        {
+            LoadCustomers();
         }
     }
 }

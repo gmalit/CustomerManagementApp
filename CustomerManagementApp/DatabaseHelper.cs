@@ -34,7 +34,7 @@ namespace CustomerManagementApp
                             Age = reader.GetInt32(3),
                             Location = reader.GetString(4),
                             LastPurchaseDate = reader.GetDateTime(5),
-                            LastUpdateDate = reader.GetDateTime(6),
+                            LastUpdateDate = reader.IsDBNull(6) ? (DateTime?)null : reader.GetDateTime(6),
                             PasswordHash = reader.IsDBNull(7) ? "" : reader.GetString(7),
                             Salt = reader.IsDBNull(8) ? "" : reader.GetString(8)
                         });
@@ -52,13 +52,15 @@ namespace CustomerManagementApp
                 foreach (var customer in customers)
                 {
                     using (SqlCommand cmd = new SqlCommand(
-                        "UPDATE Customers SET LastName = @LastName, Age = @Age, Location = @Location, LastUpdateDate = @LastUpdateDate WHERE Id = @Id", conn))
+                        "UPDATE Customers SET LastName = @LastName, Age = @Age, Location = @Location, LastUpdateDate = @LastUpdateDate, PasswordHash = @PasswordHash, Salt = @Salt  WHERE Id = @Id", conn))
                     {
                         cmd.Parameters.AddWithValue("@Id", customer.Id);
                         cmd.Parameters.AddWithValue("@LastName", customer.LastName);
                         cmd.Parameters.AddWithValue("@Age", customer.Age);
                         cmd.Parameters.AddWithValue("@Location", customer.Location);
                         cmd.Parameters.AddWithValue("@LastUpdateDate", DateTime.Now);
+                        cmd.Parameters.AddWithValue("@PasswordHash", customer.PasswordHash);
+                        cmd.Parameters.AddWithValue("@Salt", customer.Salt);
                         cmd.ExecuteNonQuery();
                     }
                 }
