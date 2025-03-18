@@ -8,12 +8,13 @@ namespace CustomerManagementApp.Utils
     {
         public static string GenerateSalt()
         {
-            // Generate a random salt (e.g., 16 bytes)
+            // Generate a random salt
             using (RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider())
             {
                 byte[] saltBytes = new byte[16];
                 rng.GetBytes(saltBytes);
-                return Convert.ToBase64String(saltBytes); // Store the salt in a string format
+                // Store the salt in a string format
+                return Convert.ToBase64String(saltBytes); 
             }
         }
 

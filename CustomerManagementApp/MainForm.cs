@@ -32,15 +32,36 @@ namespace CustomerManagementApp
                     customerGridView.DataSource = customers;
                 }
 
+                ConfigureGridView();
+
+                // Set the header text for better readability
+                customerGridView.Columns["FirstName"].HeaderText = "First Name";
+                customerGridView.Columns["LastName"].HeaderText = "Last Name";
+                customerGridView.Columns["LastPurchaseDate"].HeaderText = "Last Purchase Date";
+                customerGridView.Columns["LastUpdateDate"].HeaderText = "Last Update Date";
+                customerGridView.Columns["PasswordHash"].HeaderText = "Password Hash";
+
+                // Make read-only columns visibly distinct
                 customerGridView.Columns["Id"].ReadOnly = true;
+                customerGridView.Columns["Id"].DefaultCellStyle.BackColor = Color.LightGray;
+                customerGridView.Columns["Id"].DefaultCellStyle.ForeColor = Color.DarkGray;
+
                 customerGridView.Columns["LastPurchaseDate"].ReadOnly = true;
+                customerGridView.Columns["LastPurchaseDate"].DefaultCellStyle.ForeColor = Color.DarkGray;
+
                 customerGridView.Columns["LastUpdateDate"].ReadOnly = true;
+                customerGridView.Columns["LastUpdateDate"].DefaultCellStyle.ForeColor = Color.DarkGray;
+
                 customerGridView.Columns["PasswordHash"].ReadOnly = true;
+                customerGridView.Columns["PasswordHash"].DefaultCellStyle.ForeColor = Color.DarkGray;
+
                 customerGridView.Columns["Salt"].ReadOnly = true;
+                customerGridView.Columns["Salt"].DefaultCellStyle.ForeColor = Color.DarkGray;
 
                 // Set alternating row colors
                 customerGridView.RowsDefaultCellStyle.BackColor = Color.White;
-                customerGridView.AlternatingRowsDefaultCellStyle.BackColor = Color.LightGray;
+                customerGridView.AlternatingRowsDefaultCellStyle.BackColor = Color.LightYellow;
+
 
                 foreach (var customer in customers)
                 {
@@ -56,7 +77,42 @@ namespace CustomerManagementApp
                 LoggerHelper.Error("Error loading customers from the database.", ex);
                 MessageBox.Show("Failed to load customers.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-        }        
+        }
+
+        private void ConfigureGridView()
+        {
+            var headers = new Dictionary<string, string>
+            {
+                ["FirstName"] = "First Name",
+                ["LastName"] = "Last Name",
+                ["LastPurchaseDate"] = "Last Purchase Date",
+                ["LastUpdateDate"] = "Last Update Date",
+                ["PasswordHash"] = "Password Hash",
+                ["Salt"] = "Salt Value"
+            };
+
+            foreach (var column in customerGridView.Columns.Cast<DataGridViewColumn>())
+            {
+                if (headers.ContainsKey(column.Name))
+                    column.HeaderText = headers[column.Name];
+
+                if (IsReadOnlyColumn(column.Name))
+                {
+                    column.ReadOnly = true;
+                    column.DefaultCellStyle.BackColor = Color.LightGray;
+                    column.DefaultCellStyle.ForeColor = Color.DarkGray;
+                }
+            }
+
+            customerGridView.RowsDefaultCellStyle.BackColor = Color.White;
+            customerGridView.AlternatingRowsDefaultCellStyle.BackColor = Color.LightYellow;
+        }
+
+        private static bool IsReadOnlyColumn(string columnName)
+        {
+            return columnName == "Id" || columnName == "LastPurchaseDate" || columnName == "LastUpdateDate" || columnName == "PasswordHash" || columnName == "Salt";
+        }
+
 
         private void customerGridView_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
         {
@@ -98,26 +154,18 @@ namespace CustomerManagementApp
                     string propertyName = customerGridView.Columns[e.ColumnIndex].DataPropertyName;
                     var key = (e.RowIndex, propertyName);
 
-                    if (originalValues.ContainsKey(key))
+                    if (originalValues.TryGetValue(key, out var originalValue))
                     {
-                        var originalValue = originalValues[key];
-                        var currentValue = customer.GetType().GetProperty(propertyName)?.GetValue(customer, null);
+                        var currentValue = customer.GetType().GetProperty(propertyName)?.GetValue(customer);
+                        bool isModified = originalValue?.ToString() != currentValue?.ToString();
 
-                        if (originalValue != null && currentValue != null && originalValue.ToString() == currentValue.ToString())
-                        {
-                            // Value reverted to original, set color back to black
-                            cell.Style.ForeColor = Color.Black;
-                            modifiedCustomers.Remove(customer);
-                        }
+                        // Value reverted to original, set color back to black
+                        row.Cells[e.ColumnIndex].Style.ForeColor = isModified ? Color.Red : Color.Black;
+
+                        if (isModified)
+                            modifiedCustomers.Add(customer);
                         else
-                        {
-                            // Value changed, set color to red
-                            if (!modifiedCustomers.Contains(customer))
-                            {
-                                modifiedCustomers.Add(customer);
-                            }
-                            cell.Style.ForeColor = Color.Red;
-                        }
+                            modifiedCustomers.Remove(customer);
                     }
                 }
             }
@@ -222,7 +270,7 @@ namespace CustomerManagementApp
             customerGridView.DefaultCellStyle.ForeColor = Color.Black;
 
             // Refresh data
-            LoadCustomers(); 
+            LoadCustomers();
             MessageBox.Show("Changes committed to the database.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
@@ -235,39 +283,12 @@ namespace CustomerManagementApp
 
                 if (filteredCustomers.Any())
                 {
-                    string filePath;
-                    bool isValidPath = false;
-
-                    // Loop until a valid file path is entered
-                    while (!isValidPath)
+                    string filePath = PromptForValidFilePath();
+                    if (!string.IsNullOrEmpty(filePath))
                     {
-                        filePath = PromptForInput("Enter the full file path for JSON export (including filename, e.g., C:\\CATALIS\\customer.json):");
-
-                        if (!string.IsNullOrWhiteSpace(filePath))
-                        {
-                            // Check if the file path includes a valid filename
-                            string fileName = Path.GetFileName(filePath);
-
-                            // Get the file extension
-                            string fileExtension = Path.GetExtension(filePath).ToLower();
-
-                            if (string.IsNullOrEmpty(fileName) || !fileExtension.Equals(".json") && !fileExtension.Equals(".txt"))
-                            {
-                                MessageBox.Show("The file path must include a filename with an extension. Please provide a valid path.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                            }
-                            else
-                            {
-                                // Valid path with filename, exit loop
-                                isValidPath = true; 
-                                FileHelper.ExportToJson(filteredCustomers, filePath);
-                                MessageBox.Show($"Data exported successfully to {filePath}", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                                LoggerHelper.Info($"Data exported successfully to {filePath}");
-                            }
-                        }
-                        else
-                        {
-                            MessageBox.Show("Invalid file path. Please provide a valid path.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        }
+                        FileHelper.ExportToJson(filteredCustomers, filePath);
+                        MessageBox.Show($"Data exported successfully to {filePath}", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        LoggerHelper.Info($"Data exported successfully to {filePath}");
                     }
                 }
                 else
@@ -279,6 +300,30 @@ namespace CustomerManagementApp
             {
                 LoggerHelper.Error("Error exporting data to JSON.", ex);
                 MessageBox.Show("Failed to export data.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private string PromptForValidFilePath()
+        {
+            while (true)
+            {
+                string filePath = PromptForInput("Enter the full file path for JSON export (e.g., C:\\CATALIS\\customer.json):");
+
+                // Ensure the file path is not empty, is an absolute path, has a valid filename, and ends with .json or .txt
+                if (!string.IsNullOrWhiteSpace(filePath) &&
+                    // Ensure the path is absolute (contains directory path)
+                    Path.IsPathRooted(filePath) &&
+                    // Ensure there is a filename (after the last separator)
+                    !string.IsNullOrWhiteSpace(Path.GetFileName(filePath)) &&
+                    // Ensure there is something before the extension
+                    !string.IsNullOrWhiteSpace(Path.GetFileNameWithoutExtension(filePath)) &&
+                    // Ensure correct extension
+                    (filePath.EndsWith(".json") || filePath.EndsWith(".txt")))
+                {
+                    return filePath;
+                }
+
+                MessageBox.Show("Invalid file path. Ensure it includes a valid filename with .json or .txt extension.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
