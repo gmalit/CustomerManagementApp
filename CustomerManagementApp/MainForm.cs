@@ -14,7 +14,7 @@ namespace CustomerManagementApp
     {
         private List<Customer> customers;
         private List<Customer> modifiedCustomers = new List<Customer>();
-
+        private Dictionary<(int rowIndex, string columnName), object> originalValues = new Dictionary<(int, string), object>();
 
         public MainForm()
         {
@@ -32,10 +32,15 @@ namespace CustomerManagementApp
                     customerGridView.DataSource = customers;
                 }
 
-                customerGridView.Columns["FirstName"].ReadOnly = false;
-                customerGridView.Columns["LastName"].ReadOnly = false;
-                customerGridView.Columns["Age"].ReadOnly = false;
-                customerGridView.Columns["Location"].ReadOnly = false;
+                customerGridView.Columns["Id"].ReadOnly = true;
+                customerGridView.Columns["LastPurchaseDate"].ReadOnly = true;
+                customerGridView.Columns["LastUpdateDate"].ReadOnly = true;
+                customerGridView.Columns["PasswordHash"].ReadOnly = true;
+                customerGridView.Columns["Salt"].ReadOnly = true;
+
+                // Set alternating row colors
+                customerGridView.RowsDefaultCellStyle.BackColor = Color.White;
+                customerGridView.AlternatingRowsDefaultCellStyle.BackColor = Color.LightGray;
 
                 foreach (var customer in customers)
                 {
@@ -51,19 +56,83 @@ namespace CustomerManagementApp
                 LoggerHelper.Error("Error loading customers from the database.", ex);
                 MessageBox.Show("Failed to load customers.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }        
+
+        private void customerGridView_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
+        {
+            if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
+            {
+                var row = customerGridView.Rows[e.RowIndex];
+                var cell = row.Cells[e.ColumnIndex];
+                var customer = row.DataBoundItem as Customer;
+
+                if (customer != null)
+                {
+                    string propertyName = customerGridView.Columns[e.ColumnIndex].DataPropertyName;
+                    var originalCustomer = customers.FirstOrDefault(c => c.Id == customer.Id);
+                    if (originalCustomer != null)
+                    {
+                        var originalValue = originalCustomer.GetType().GetProperty(propertyName)?.GetValue(originalCustomer, null);
+                        var key = (e.RowIndex, propertyName);
+
+                        // Store the original value if it's not already stored
+                        if (!originalValues.ContainsKey(key))
+                        {
+                            originalValues[key] = originalValue;
+                        }
+                    }
+                }
+            }
         }
 
         private void customerGridView_CellValueChanged(object sender, DataGridViewCellEventArgs e)
         {
-            // Ensure it's a valid row
-            if (e.RowIndex >= 0) 
+            if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
             {
-                var customer = customerGridView.Rows[e.RowIndex].DataBoundItem as Customer;
-                if (customer != null && !modifiedCustomers.Contains(customer))
-                {
-                    modifiedCustomers.Add(customer);
+                var row = customerGridView.Rows[e.RowIndex];
+                var cell = row.Cells[e.ColumnIndex];
+                var customer = row.DataBoundItem as Customer;
 
-                    customerGridView.Rows[e.RowIndex].Cells[e.ColumnIndex].Style.ForeColor = Color.Red;
+                if (customer != null)
+                {
+                    string propertyName = customerGridView.Columns[e.ColumnIndex].DataPropertyName;
+                    var key = (e.RowIndex, propertyName);
+
+                    if (originalValues.ContainsKey(key))
+                    {
+                        var originalValue = originalValues[key];
+                        var currentValue = customer.GetType().GetProperty(propertyName)?.GetValue(customer, null);
+
+                        if (originalValue != null && currentValue != null && originalValue.ToString() == currentValue.ToString())
+                        {
+                            // Value reverted to original, set color back to black
+                            cell.Style.ForeColor = Color.Black;
+                            modifiedCustomers.Remove(customer);
+                        }
+                        else
+                        {
+                            // Value changed, set color to red
+                            if (!modifiedCustomers.Contains(customer))
+                            {
+                                modifiedCustomers.Add(customer);
+                            }
+                            cell.Style.ForeColor = Color.Red;
+                        }
+                    }
+                }
+            }
+        }
+
+        private void customerGridView_CellValidating(object sender, DataGridViewCellValidatingEventArgs e)
+        {
+            if (customerGridView.Columns[e.ColumnIndex].Name == "Age")
+            {
+                string input = e.FormattedValue.ToString();
+
+                if (!int.TryParse(input, out _))
+                {
+                    MessageBox.Show("Invalid input! Please enter a numeric value for Age.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    e.Cancel = true; // Prevents leaving the cell until a valid value is entered
                 }
             }
         }

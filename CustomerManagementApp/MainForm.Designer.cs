@@ -55,6 +55,8 @@ namespace CustomerManagementApp
             this.customerGridView.RowHeadersWidth = 51;
             this.customerGridView.Size = new System.Drawing.Size(844, 250);
             this.customerGridView.TabIndex = 0;
+            this.customerGridView.CellBeginEdit += new System.Windows.Forms.DataGridViewCellCancelEventHandler(this.customerGridView_CellBeginEdit);
+            this.customerGridView.CellValidating += new System.Windows.Forms.DataGridViewCellValidatingEventHandler(this.customerGridView_CellValidating);
             this.customerGridView.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.customerGridView_CellValueChanged);
             // 
             // btnUppercaseLastNames
@@ -111,7 +113,7 @@ namespace CustomerManagementApp
             // 
             this.AutoSize = true;
             this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.ClientSize = new System.Drawing.Size(868, 400);
+            this.ClientSize = new System.Drawing.Size(868, 368);
             this.Controls.Add(this.btnRefreshGrid);
             this.Controls.Add(this.customerGridView);
             this.Controls.Add(this.btnUppercaseLastNames);
