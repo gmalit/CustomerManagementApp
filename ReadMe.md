@@ -29,9 +29,9 @@ Install-Package EntityFramework
 Install-Package log4net
 Install-Package Microsoft.EntityFramework.SqlServer
 Install-Package System.Data.SqlClient
+```
 
-
-# Configuration
+## Configuration
 
 ## 1. Database Connection
 
@@ -43,7 +43,7 @@ Modify the `App.config` file to set up the database connection:
          connectionString="Server=YOUR_SERVER_NAME;Database=CustomerDB;Trusted_Connection=True;"
          providerName="System.Data.SqlClient" />
 </connectionStrings>
-
+```
 
 Replace `YOUR_SERVER_NAME` with your SQL Server instance.
 
@@ -71,6 +71,7 @@ The system uses **log4net** for logging errors and activities. The logging confi
         <appender-ref ref="RollingFileAppender" />
     </root>
 </log4net>
+```
 
 This ensures logs are stored in Logs/CustomerApp.log, which can be useful for troubleshooting.
 
@@ -86,6 +87,7 @@ Since this is using **Entity Framework Code First Migrations**, run the followin
 
 ```bash
 Update-Database
+```
 
 This will apply the latest migrations and create the necessary tables in the database.
 
@@ -95,6 +97,7 @@ This will apply the latest migrations and create the necessary tables in the dat
 
    ```bash
    dotnet restore
+   ```
 
 2. **Build the Solution** (Ctrl + Shift + B in Visual Studio).
 
