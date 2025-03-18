@@ -53,7 +53,7 @@ namespace CustomerManagementApp
             this.customerGridView.Location = new System.Drawing.Point(12, 52);
             this.customerGridView.Name = "customerGridView";
             this.customerGridView.RowHeadersWidth = 51;
-            this.customerGridView.Size = new System.Drawing.Size(844, 250);
+            this.customerGridView.Size = new System.Drawing.Size(844, 330);
             this.customerGridView.TabIndex = 0;
             this.customerGridView.CellBeginEdit += new System.Windows.Forms.DataGridViewCellCancelEventHandler(this.customerGridView_CellBeginEdit);
             this.customerGridView.CellValidating += new System.Windows.Forms.DataGridViewCellValidatingEventHandler(this.customerGridView_CellValidating);
@@ -61,7 +61,7 @@ namespace CustomerManagementApp
             // 
             // btnUppercaseLastNames
             // 
-            this.btnUppercaseLastNames.Location = new System.Drawing.Point(12, 310);
+            this.btnUppercaseLastNames.Location = new System.Drawing.Point(12, 399);
             this.btnUppercaseLastNames.Name = "btnUppercaseLastNames";
             this.btnUppercaseLastNames.Size = new System.Drawing.Size(140, 30);
             this.btnUppercaseLastNames.TabIndex = 1;
@@ -71,7 +71,7 @@ namespace CustomerManagementApp
             // 
             // btnCommitChanges
             // 
-            this.btnCommitChanges.Location = new System.Drawing.Point(253, 310);
+            this.btnCommitChanges.Location = new System.Drawing.Point(253, 399);
             this.btnCommitChanges.Name = "btnCommitChanges";
             this.btnCommitChanges.Size = new System.Drawing.Size(140, 30);
             this.btnCommitChanges.TabIndex = 2;
@@ -81,7 +81,7 @@ namespace CustomerManagementApp
             // 
             // btnExportJson
             // 
-            this.btnExportJson.Location = new System.Drawing.Point(498, 310);
+            this.btnExportJson.Location = new System.Drawing.Point(498, 399);
             this.btnExportJson.Name = "btnExportJson";
             this.btnExportJson.Size = new System.Drawing.Size(140, 30);
             this.btnExportJson.TabIndex = 3;
@@ -91,7 +91,7 @@ namespace CustomerManagementApp
             // 
             // btnSearchByAge
             // 
-            this.btnSearchByAge.Location = new System.Drawing.Point(716, 310);
+            this.btnSearchByAge.Location = new System.Drawing.Point(716, 399);
             this.btnSearchByAge.Name = "btnSearchByAge";
             this.btnSearchByAge.Size = new System.Drawing.Size(140, 30);
             this.btnSearchByAge.TabIndex = 4;
@@ -113,7 +113,7 @@ namespace CustomerManagementApp
             // 
             this.AutoSize = true;
             this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.ClientSize = new System.Drawing.Size(868, 368);
+            this.ClientSize = new System.Drawing.Size(868, 441);
             this.Controls.Add(this.btnRefreshGrid);
             this.Controls.Add(this.customerGridView);
             this.Controls.Add(this.btnUppercaseLastNames);
