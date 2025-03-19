@@ -58,7 +58,7 @@ The system uses **log4net** for logging errors and activities. The logging confi
 
 <log4net>
     <appender name="RollingFileAppender" type="log4net.Appender.RollingFileAppender">
-        <file value="Logs/CustomerApp.log" />
+        <file value="C:\CATALIS\logs\app.log" />
         <appendToFile value="true" />
         <maximumFileSize value="10MB" />
         <maxSizeRollBackups value="5" />
@@ -73,7 +73,7 @@ The system uses **log4net** for logging errors and activities. The logging confi
 </log4net>
 ```
 
-This ensures logs are stored in Logs/CustomerApp.log, which can be useful for troubleshooting.
+This ensures logs are stored in C:\CATALIS\logs\app.log, which can be useful for troubleshooting.
 
 # Database Setup
 
