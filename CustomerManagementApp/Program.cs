@@ -1,11 +1,13 @@
-﻿using System;
+﻿using log4net.Config;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace CustomerManagementApp
-{
+{   
+
     static class Program
     {
         /// <summary>
@@ -14,6 +16,8 @@ namespace CustomerManagementApp
         [STAThread]
         static void Main()
         {
+            XmlConfigurator.Configure();
+
             Console.WriteLine("Welcome to Customer Management App v1.0");
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);

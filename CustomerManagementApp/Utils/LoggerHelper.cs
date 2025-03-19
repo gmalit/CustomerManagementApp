@@ -11,7 +11,7 @@ namespace CustomerManagementApp.Utils
 
         static LoggerHelper()
         {
-            XmlConfigurator.Configure(new FileInfo("log4net.config"));
+            //XmlConfigurator.Configure(new FileInfo("log4net.config"));
         }
 
         public static void Info(string message)
