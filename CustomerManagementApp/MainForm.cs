@@ -203,19 +203,30 @@ namespace CustomerManagementApp
 
         public void SetPassword(Customer customer)
         {
-            string salt = PasswordHelper.GenerateSalt();
-            string passwordHash = PasswordHelper.GeneratePasswordHash(salt);
-
-            customer.PasswordHash = passwordHash;
-            customer.Salt = salt;
-
-            using (var context = new CustomerContext())
+            try
             {
-                context.Entry(customer).State = EntityState.Modified;
-                context.SaveChanges();
+                string salt = PasswordHelper.GenerateSalt();
+                string passwordHash = PasswordHelper.GeneratePasswordHash(salt);
+
+                customer.PasswordHash = passwordHash;
+                customer.Salt = salt;
+
+                using (var context = new CustomerContext())
+                {
+                    context.Entry(customer).State = EntityState.Modified;
+                    context.SaveChanges();
+                }
+
+                LoggerHelper.Info($"Password set and updated for customer: {customer.FirstName} {customer.LastName}");
             }
-            LoggerHelper.Info($"Password set and updated for customer: {customer.FirstName} {customer.LastName}");
+            catch (Exception ex)
+            {
+                // Log the error and show a message box to the user
+                LoggerHelper.Error("Error setting and updating password for customer.", ex);
+                MessageBox.Show($"An error occurred while setting the password: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
+
 
         private void btnUppercaseLastNames_Click(object sender, EventArgs e)
         {
@@ -258,36 +269,47 @@ namespace CustomerManagementApp
                 return;
             }
 
-            using (var context = new CustomerContext())
+            try
             {
-                foreach (var customer in modifiedCustomers)
-                {                   
-                    var existingCustomer = context.Customers.Find(customer.Id);
-                    if (existingCustomer != null)
+                using (var context = new CustomerContext())
+                {
+                    foreach (var customer in modifiedCustomers)
                     {
-                        // Update fields if changed
-                        existingCustomer.FirstName = customer.FirstName;
-                        existingCustomer.LastName = customer.LastName;
-                        existingCustomer.Age = customer.Age;
-                        existingCustomer.Location = customer.Location;
+                        var existingCustomer = context.Customers.Find(customer.Id);
+                        if (existingCustomer != null)
+                        {
+                            // Update fields if changed
+                            existingCustomer.FirstName = customer.FirstName;
+                            existingCustomer.LastName = customer.LastName;
+                            existingCustomer.Age = customer.Age;
+                            existingCustomer.Location = customer.Location;
 
-                        // Update LastUpdateDate
-                        existingCustomer.LastUpdateDate = DateTime.Now;
+                            // Update LastUpdateDate
+                            existingCustomer.LastUpdateDate = DateTime.Now;
+                        }
                     }
+
+                    context.SaveChanges();
                 }
-                context.SaveChanges();
+
+                // Reset the list after committing changes
+                modifiedCustomers.Clear();
+                originalValues.Clear();
+                // Reset the font color to black for all cells in the DataGridView
+                customerGridView.DefaultCellStyle.ForeColor = Color.Black;
+
+                // Refresh data
+                LoadCustomers();
+                MessageBox.Show("Changes committed to the database.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
-
-            // Reset the list after committing changes
-            modifiedCustomers.Clear();
-            originalValues.Clear();
-            // Reset the font color to black for all cells in the DataGridView
-            customerGridView.DefaultCellStyle.ForeColor = Color.Black;
-
-            // Refresh data
-            LoadCustomers();
-            MessageBox.Show("Changes committed to the database.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            catch (Exception ex)
+            {
+                // Log the error and show a message box
+                LoggerHelper.Error("Error committing changes to the database.", ex);
+                MessageBox.Show($"An error occurred while committing changes: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
+
 
         private void btnExportJson_Click(object sender, EventArgs e)
         {
