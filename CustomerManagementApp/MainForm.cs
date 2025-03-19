@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.Entity;
+using System.Data.Entity.Validation;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -189,13 +190,28 @@ namespace CustomerManagementApp
                      customerGridView.Columns[e.ColumnIndex].Name == "Location")
             {
                 string input = e.FormattedValue.ToString();
+                string fieldName = customerGridView.Columns[e.ColumnIndex].HeaderText;
 
                 if (string.IsNullOrEmpty(input))
-                {
-                    string fieldName = customerGridView.Columns[e.ColumnIndex].HeaderText;
+                {                   
                     MessageBox.Show($"{fieldName} is required.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     // Prevents leaving the cell until a value is entered
-                    e.Cancel = true; 
+                    e.Cancel = true;
+                }
+                // Check for maximum length for FirstName and LastName
+                else if ((customerGridView.Columns[e.ColumnIndex].Name == "FirstName" ||
+                          customerGridView.Columns[e.ColumnIndex].Name == "LastName") &&
+                         input.Length > 50)
+                {                    
+                    MessageBox.Show($"{fieldName} cannot exceed 50 characters.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    // Prevents leaving the cell until a valid value is entered
+                    e.Cancel = true;
+                }
+                else if (customerGridView.Columns[e.ColumnIndex].Name == "Location" && input.Length > 100)
+                {
+                    MessageBox.Show("Location cannot exceed 100 characters.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    // Prevents leaving the cell until a valid value is entered
+                    e.Cancel = true;
                 }
             }
         }
@@ -295,6 +311,7 @@ namespace CustomerManagementApp
                 // Reset the list after committing changes
                 modifiedCustomers.Clear();
                 originalValues.Clear();
+
                 // Reset the font color to black for all cells in the DataGridView
                 customerGridView.DefaultCellStyle.ForeColor = Color.Black;
 
@@ -302,9 +319,30 @@ namespace CustomerManagementApp
                 LoadCustomers();
                 MessageBox.Show("Changes committed to the database.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
+            catch (DbEntityValidationException dbEx)
+            {
+                // Extract and log detailed validation errors, including record ID
+                foreach (var validationError in dbEx.EntityValidationErrors)
+                {
+                    // Get the entity object (the actual record) that caused the validation errors
+                    var entity = validationError.Entry.Entity;
+
+                    // Get the record ID
+                    var entityId = entity.GetType().GetProperty("Id")?.GetValue(entity, null);
+
+                    // Log the validation errors along with the record ID
+                    foreach (var error in validationError.ValidationErrors)
+                    {
+                        LoggerHelper.Error($"Record ID: {entityId}, Property: {error.PropertyName}, Error: {error.ErrorMessage}");
+                    }
+                }
+
+                // Show a more user-friendly message with detailed error information
+                MessageBox.Show("There were validation errors while committing changes to the database. Please check the log for details.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
             catch (Exception ex)
             {
-                // Log the error and show a message box
+                // Handle all other exceptions
                 LoggerHelper.Error("Error committing changes to the database.", ex);
                 MessageBox.Show($"An error occurred while committing changes: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
