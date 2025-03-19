@@ -176,10 +176,26 @@ namespace CustomerManagementApp
             {
                 string input = e.FormattedValue.ToString();
 
-                if (!int.TryParse(input, out _))
+                if (!int.TryParse(input, out int age) || age <= 0)
                 {
                     MessageBox.Show("Invalid input! Please enter a numeric value for Age.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    e.Cancel = true; // Prevents leaving the cell until a valid value is entered
+                    // Prevents leaving the cell until a valid value is entered
+                    e.Cancel = true;
+                }
+            }
+            // Check if the column being edited is FirstName, LastName, or Location
+            else if (customerGridView.Columns[e.ColumnIndex].Name == "FirstName" ||
+                     customerGridView.Columns[e.ColumnIndex].Name == "LastName" ||
+                     customerGridView.Columns[e.ColumnIndex].Name == "Location")
+            {
+                string input = e.FormattedValue.ToString();
+
+                if (string.IsNullOrEmpty(input))
+                {
+                    string fieldName = customerGridView.Columns[e.ColumnIndex].HeaderText;
+                    MessageBox.Show($"{fieldName} is required.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    // Prevents leaving the cell until a value is entered
+                    e.Cancel = true; 
                 }
             }
         }
@@ -245,7 +261,7 @@ namespace CustomerManagementApp
             using (var context = new CustomerContext())
             {
                 foreach (var customer in modifiedCustomers)
-                {
+                {                   
                     var existingCustomer = context.Customers.Find(customer.Id);
                     if (existingCustomer != null)
                     {
