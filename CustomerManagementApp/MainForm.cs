@@ -145,8 +145,7 @@ namespace CustomerManagementApp
         {
             if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
             {
-                var row = customerGridView.Rows[e.RowIndex];
-                var cell = row.Cells[e.ColumnIndex];
+                var row = customerGridView.Rows[e.RowIndex];                
                 var customer = row.DataBoundItem as Customer;
 
                 if (customer != null)
@@ -265,7 +264,7 @@ namespace CustomerManagementApp
 
             // Reset the list after committing changes
             modifiedCustomers.Clear();
-
+            originalValues.Clear();
             // Reset the font color to black for all cells in the DataGridView
             customerGridView.DefaultCellStyle.ForeColor = Color.Black;
 
