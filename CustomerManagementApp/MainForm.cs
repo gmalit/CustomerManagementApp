@@ -146,7 +146,7 @@ namespace CustomerManagementApp
         {
             if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
             {
-                var row = customerGridView.Rows[e.RowIndex];                
+                var row = customerGridView.Rows[e.RowIndex];
                 var customer = row.DataBoundItem as Customer;
 
                 if (customer != null)
@@ -193,7 +193,7 @@ namespace CustomerManagementApp
                 string fieldName = customerGridView.Columns[e.ColumnIndex].HeaderText;
 
                 if (string.IsNullOrEmpty(input))
-                {                   
+                {
                     MessageBox.Show($"{fieldName} is required.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     // Prevents leaving the cell until a value is entered
                     e.Cancel = true;
@@ -202,7 +202,7 @@ namespace CustomerManagementApp
                 else if ((customerGridView.Columns[e.ColumnIndex].Name == "FirstName" ||
                           customerGridView.Columns[e.ColumnIndex].Name == "LastName") &&
                          input.Length > 50)
-                {                    
+                {
                     MessageBox.Show($"{fieldName} cannot exceed 50 characters.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     // Prevents leaving the cell until a valid value is entered
                     e.Cancel = true;
@@ -354,17 +354,27 @@ namespace CustomerManagementApp
             try
             {
                 string firstName = PromptForInput("Enter the first name to search for:");
+
+                if (firstName == null)
+                {
+                    return;
+                }
+
                 var filteredCustomers = customers.Where(c => c.FirstName != null && c.FirstName.ToLower().Contains(firstName.ToLower())).ToList();
 
                 if (filteredCustomers.Any())
                 {
                     string filePath = PromptForValidFilePath();
-                    if (!string.IsNullOrEmpty(filePath))
+
+                    if (filePath == null)
                     {
-                        FileHelper.ExportToJson(filteredCustomers, filePath);
-                        MessageBox.Show($"Data exported successfully to {filePath}", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        LoggerHelper.Info($"Data exported successfully to {filePath}");
+                        return;
                     }
+
+                    FileHelper.ExportToJson(filteredCustomers, filePath);
+                    MessageBox.Show($"Data exported successfully to {filePath}", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    LoggerHelper.Info($"Data exported successfully to {filePath}");
+
                 }
                 else
                 {
@@ -384,6 +394,11 @@ namespace CustomerManagementApp
             {
                 string filePath = PromptForInput("Enter the full file path for JSON export (e.g., C:\\CATALIS\\customer.json):");
 
+                if (filePath == null)
+                {
+                    return null;
+                }
+
                 // Ensure the file path is not empty, is an absolute path, has a valid filename, and ends with .json or .txt
                 if (!string.IsNullOrWhiteSpace(filePath) &&
                     // Ensure the path is absolute (contains directory path)
@@ -397,6 +412,7 @@ namespace CustomerManagementApp
                 {
                     return filePath;
                 }
+
 
                 MessageBox.Show("Invalid file path. Ensure it includes a valid filename with .json or .txt extension.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
@@ -422,7 +438,7 @@ namespace CustomerManagementApp
 
         private string PromptForInput(string message)
         {
-            return Interaction.InputBox(message, "Input Required", "");
+            return CustomInputDialog.Show(message);
         }
 
         private void btnRefreshGrid_Click(object sender, EventArgs e)
